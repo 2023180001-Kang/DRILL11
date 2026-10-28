@@ -9,6 +9,12 @@ def handle_events():
     global running
     event_list = get_events()
     for event in event_list:
+        if event.type == SDL_KEYDOWN and event.key in (SDLK_a, SDLK_LEFT, SDLK_RIGHT):
+            if event.key in pressed_keys:
+                continue
+            pressed_keys.add(event.key)
+        elif event.type == SDL_KEYUP and event.key in (SDLK_a, SDLK_LEFT, SDLK_RIGHT):
+            pressed_keys.discard(event.key)
         if event.type == SDL_QUIT:
             running = False
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
@@ -22,10 +28,8 @@ def handle_events():
                 if isinstance(o, Boy):
                     o.activate_auto_run()
         elif event.type == SDL_KEYDOWN and event.key in (SDLK_LEFT, SDLK_RIGHT):
-            pressed_keys.add(event.key)
             update_boy_directions(1 if event.key == SDLK_RIGHT else -1)
         elif event.type == SDL_KEYUP and event.key in (SDLK_LEFT, SDLK_RIGHT):
-            pressed_keys.discard(event.key)
             update_boy_directions()
 
 

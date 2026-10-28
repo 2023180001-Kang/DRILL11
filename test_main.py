@@ -93,6 +93,33 @@ class InputTests(unittest.TestCase):
             self.send(main.SDL_KEYDOWN, key)
             self.assertEqual(self.boy.state, 'AutoRun')
 
+    def test_repeated_a_does_not_extend_timer_or_restart_after_expiry(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        started_at = self.boy.auto_run.started_at
+        self.clock.return_value += 4
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.assertEqual(self.boy.auto_run.started_at, started_at)
+        self.clock.return_value += 1
+        self.boy.update()
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.send(main.SDL_KEYUP, main.SDLK_a)
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.assertEqual(self.boy.state, 'AutoRun')
+        self.assertEqual(self.boy.auto_run.started_at, started_at + 5)
+
+    def test_releasing_a_keeps_auto_run_active(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.send(main.SDL_KEYUP, main.SDLK_a)
+        self.assertEqual(self.boy.state, 'AutoRun')
+
+    def test_repeated_held_arrow_does_not_cancel_auto_run(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_RIGHT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.assertEqual(self.boy.state, 'AutoRun')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -256,6 +256,13 @@ class BoyTests(unittest.TestCase):
         self.advance(5)
         self.assertTrue(self.boy.can_take_damage())
 
+    def test_active_auto_run_ignores_reactivation(self):
+        self.boy.activate_auto_run()
+        started_at = self.boy.auto_run.started_at
+        self.advance(2)
+        self.assertFalse(self.boy.activate_auto_run())
+        self.assertEqual(self.boy.auto_run.started_at, started_at)
+
 
 if __name__ == '__main__':
     unittest.main()
