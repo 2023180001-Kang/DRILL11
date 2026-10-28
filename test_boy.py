@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from boy import AutoRun, Boy
@@ -10,7 +11,8 @@ class BoyTests(unittest.TestCase):
         self.clock = clock.start()
         self.addCleanup(clock.stop)
         image = patch('boy.load_image', return_value=Mock())
-        self.image = image.start().return_value
+        self.load_image = image.start()
+        self.image = self.load_image.return_value
         self.addCleanup(image.stop)
         canvas = patch('boy.get_canvas_width', return_value=800)
         canvas.start()
@@ -24,6 +26,9 @@ class BoyTests(unittest.TestCase):
     def test_initial_state_is_idle(self):
         self.assertEqual(self.boy.state, 'IDLE')
         self.assertEqual(self.boy.direction, 0)
+
+    def test_sprite_path_is_relative_to_module_not_working_directory(self):
+        self.load_image.assert_called_once_with(str(Path(__file__).resolve().with_name('animation_sheet.png')))
 
     def test_running_uses_elapsed_time(self):
         self.boy.set_direction(1)

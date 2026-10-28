@@ -1,4 +1,5 @@
 from math import radians
+from pathlib import Path
 
 from pico2d import get_canvas_width, get_time, load_image
 from transitions import Machine
@@ -71,7 +72,7 @@ class Boy:
         self.scale = 1.0
         self.idle_time = 0
         self.last_update_time = get_time()
-        self.image = load_image('animation_sheet.png')
+        self.image = load_image(str(Path(__file__).resolve().with_name('animation_sheet.png')))
         self.auto_run = AutoRun(self)
         self.machine = Machine(
             model=self,
