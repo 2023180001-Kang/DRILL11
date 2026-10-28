@@ -120,6 +120,83 @@ class InputTests(unittest.TestCase):
         self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
         self.assertEqual(self.boy.state, 'AutoRun')
 
+    def test_world_keeps_grass_and_one_hundred_boys(self):
+        with patch('main.Grass') as grass:
+            main.reset_world()
+        self.assertEqual(len(main.world), 101)
+        self.assertIs(main.world[0], grass.return_value)
+        self.assertEqual(sum(isinstance(obj, Boy) for obj in main.world), 100)
+
+    def test_all_boys_auto_run_and_expire_together(self):
+        with patch('main.Grass'):
+            main.reset_world()
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        boys = main.world[1:]
+        self.assertTrue(all(boy.state == 'AutoRun' and boy.invincible for boy in boys))
+        self.clock.return_value += 5
+        main.update_world()
+        self.assertTrue(all(boy.state == 'IDLE' and not boy.invincible for boy in boys))
+
+    def test_single_arrow_cancels_all_boys(self):
+        with patch('main.Grass'):
+            main.reset_world()
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.assertTrue(all(boy.state == 'RUN' and boy.direction == -1 for boy in main.world[1:]))
+
+    def test_space_still_wakes_sleeping_boys(self):
+        self.clock.return_value += 5
+        main.update_world()
+        self.send(main.SDL_KEYDOWN, main.SDLK_SPACE)
+        self.assertEqual(self.boy.state, 'IDLE')
+
+    def test_escape_and_window_close_stop_running(self):
+        for event_type, key in ((main.SDL_KEYDOWN, main.SDLK_ESCAPE), (main.SDL_QUIT, None)):
+            with self.subTest(event_type=event_type):
+                main.running = True
+                self.send(event_type, key)
+                self.assertFalse(main.running)
+
+    def test_game_loop_closes_canvas_after_quit(self):
+        event = SimpleNamespace(type=main.SDL_QUIT)
+        with patch('main.open_canvas') as opened, patch('main.close_canvas') as closed, \
+                patch('main.reset_world'), patch('main.get_events', return_value=[event]), \
+                patch('main.render_world'), patch('main.delay'):
+            main.main()
+        opened.assert_called_once_with(800, 600)
+        closed.assert_called_once_with()
+
+    def test_game_loop_closes_canvas_on_initialization_failure(self):
+        with patch('main.open_canvas'), patch('main.close_canvas') as closed, \
+                patch('main.reset_world', side_effect=RuntimeError('resource failure')):
+            with self.assertRaisesRegex(RuntimeError, 'resource failure'):
+                main.main()
+        closed.assert_called_once_with()
+
+    def test_activation_cancel_and_release_in_one_event_batch(self):
+        events = [
+            SimpleNamespace(type=main.SDL_KEYDOWN, key=main.SDLK_a),
+            SimpleNamespace(type=main.SDL_KEYDOWN, key=main.SDLK_LEFT),
+            SimpleNamespace(type=main.SDL_KEYUP, key=main.SDLK_LEFT),
+        ]
+        with patch('main.get_events', return_value=events):
+            main.handle_events()
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.direction, 0)
+        self.assertFalse(self.boy.invincible)
+
+    def test_input_dispatch_with_mixed_character_states(self):
+        moving, sleeping, active = Boy(), Boy(), Boy()
+        moving.set_direction(1)
+        sleeping.sleep()
+        active.activate_auto_run()
+        main.world.extend([moving, sleeping, active])
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.assertEqual([boy.state for boy in main.world], ['AutoRun', 'RUN', 'SLEEP', 'AutoRun'])
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.assertTrue(all(boy.state == 'RUN' and boy.direction == -1 for boy in main.world))
+        self.assertTrue(all(boy.speed == 200 and boy.scale == 1 and not boy.invincible for boy in main.world))
+
 
 if __name__ == '__main__':
     unittest.main()
