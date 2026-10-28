@@ -332,6 +332,21 @@ class BoyTests(unittest.TestCase):
         self.boy.draw()
         self.assertEqual(self.image.clip_draw.call_args.args[1], 0)
 
+    def test_late_update_only_moves_for_the_active_five_seconds(self):
+        self.boy.RUN_SPEED = 10
+        self.boy.activate_auto_run()
+        self.advance(6)
+        self.assertEqual(self.boy.x, 500)
+        self.assertEqual(self.boy.state, 'IDLE')
+
+    def test_auto_run_uses_actual_canvas_width_for_right_boundary(self):
+        with patch('boy.get_canvas_width', return_value=1000):
+            self.boy.x = 890
+            self.boy.activate_auto_run()
+            self.advance(0.125)
+        self.assertEqual(self.boy.x, 900)
+        self.assertEqual(self.boy.direction, -1)
+
 
 if __name__ == '__main__':
     unittest.main()
