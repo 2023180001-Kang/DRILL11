@@ -8,6 +8,7 @@ class AutoRun:
     DURATION = 5.0
     SPEED_MULTIPLIER = 2.0
     SCALE_MULTIPLIER = 2.0
+    ANIMATION_FPS = 20.0
 
     def __init__(self, boy):
         self.boy = boy
@@ -41,6 +42,7 @@ class AutoRun:
         # A delayed frame must not add movement beyond the five-second window.
         active_time = max(0.0, min(delta_time, self.DURATION - elapsed + delta_time))
         self.boy.x += self.boy.direction * self.boy.speed * active_time
+        self.boy.frame = (self.boy.frame + self.ANIMATION_FPS * active_time) % 8
         self.bounce_at_edges()
         if elapsed >= self.DURATION:
             self.boy.finish_auto_run()
@@ -126,7 +128,7 @@ class Boy:
             source_y = 100 if self.face_dir == 1 else 0
         else:
             source_y = 300 if self.face_dir == 1 else 200
-        source_x = self.frame * 100
+        source_x = int(self.frame) * 100
 
         if self.state == 'SLEEP':
             sleep_y = self.y - 20

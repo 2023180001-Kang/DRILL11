@@ -263,6 +263,21 @@ class BoyTests(unittest.TestCase):
         self.assertFalse(self.boy.activate_auto_run())
         self.assertEqual(self.boy.auto_run.started_at, started_at)
 
+    def test_auto_run_animation_is_time_based(self):
+        for intervals in ((0.25,), (0.125, 0.125)):
+            with self.subTest(intervals=intervals):
+                self.boy = Boy()
+                self.boy.activate_auto_run()
+                for seconds in intervals:
+                    self.advance(seconds)
+                self.assertEqual(self.boy.frame, 5)
+
+    def test_auto_run_draw_uses_integer_sprite_frame(self):
+        self.boy.activate_auto_run()
+        self.advance(0.0625)
+        self.boy.draw()
+        self.image.clip_draw.assert_called_once_with(100, 100, 100, 100, 425, 140, 200, 200)
+
 
 if __name__ == '__main__':
     unittest.main()
