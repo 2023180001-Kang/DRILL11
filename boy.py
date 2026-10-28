@@ -5,6 +5,8 @@ from transitions import Machine
 
 
 class AutoRun:
+    SPEED_MULTIPLIER = 2.0
+
     def __init__(self, boy):
         self.boy = boy
         self.started_at = None
@@ -13,16 +15,18 @@ class AutoRun:
         self.started_at = get_time()
         self.boy.last_update_time = self.started_at
         self.boy.direction = self.boy.face_dir
+        self.boy.speed = self.boy.RUN_SPEED * self.SPEED_MULTIPLIER
         self.boy.frame = 0
         self.boy.idle_time = 0
 
     def exit(self):
         self.boy.direction = 0
+        self.boy.speed = self.boy.RUN_SPEED
         self.boy.frame = 0
         self.boy.idle_time = 0
 
     def update(self, delta_time):
-        self.boy.x += self.boy.direction * self.boy.RUN_SPEED * delta_time
+        self.boy.x += self.boy.direction * self.boy.speed * delta_time
 
 
 class Boy:
@@ -33,6 +37,7 @@ class Boy:
         self.frame = 0
         self.face_dir = 1
         self.direction = 0
+        self.speed = self.RUN_SPEED
         self.idle_time = 0
         self.last_update_time = get_time()
         self.image = load_image('animation_sheet.png')
@@ -74,7 +79,7 @@ class Boy:
             else:
                 self.frame = (self.frame + 1) % 8
         elif self.state == 'RUN':
-            self.x = max(50, min(750, self.x + self.direction * self.RUN_SPEED * delta_time))
+            self.x = max(50, min(750, self.x + self.direction * self.speed * delta_time))
             self.frame = (self.frame + 1) % 8
         elif self.state == 'AutoRun':
             self.auto_run.update(delta_time)

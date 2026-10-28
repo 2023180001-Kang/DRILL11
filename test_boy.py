@@ -94,7 +94,7 @@ class BoyTests(unittest.TestCase):
     def test_auto_run_moves_without_input(self):
         self.boy.activate_auto_run()
         self.advance(0.25)
-        self.assertEqual(self.boy.x, 450)
+        self.assertEqual(self.boy.x, 500)
         self.assertEqual(self.boy.state, 'AutoRun')
 
     def test_auto_run_movement_does_not_depend_on_frame_count(self):
@@ -104,13 +104,19 @@ class BoyTests(unittest.TestCase):
                 self.boy.activate_auto_run()
                 for seconds in intervals:
                     self.advance(seconds)
-                self.assertEqual(self.boy.x, 450)
+                self.assertEqual(self.boy.x, 500)
 
     def test_auto_run_does_not_include_time_before_entry(self):
         self.clock.return_value += 3
         self.boy.activate_auto_run()
         self.advance(0.125)
-        self.assertEqual(self.boy.x, 425)
+        self.assertEqual(self.boy.x, 450)
+
+    def test_auto_run_doubles_speed_and_restores_it_on_exit(self):
+        self.boy.activate_auto_run()
+        self.assertEqual(self.boy.speed, 400)
+        self.boy.finish_auto_run()
+        self.assertEqual(self.boy.speed, 200)
 
 
 if __name__ == '__main__':
