@@ -163,6 +163,35 @@ class BoyTests(unittest.TestCase):
         self.assertEqual(self.boy.x, 700)
         self.assertEqual(self.boy.direction, -1)
 
+    def test_auto_run_expires_at_five_seconds(self):
+        self.boy.activate_auto_run()
+        self.advance(4.999)
+        self.assertEqual(self.boy.state, 'AutoRun')
+        self.clock.return_value = self.boy.auto_run.started_at + 5
+        self.boy.update()
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.direction, 0)
+        self.assertEqual(self.boy.speed, 200)
+        self.assertEqual(self.boy.scale, 1)
+        x = self.boy.x
+        self.advance(0.25)
+        self.assertEqual(self.boy.x, x)
+
+    def test_auto_run_expires_on_first_update_after_deadline(self):
+        self.boy.activate_auto_run()
+        self.advance(6)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.idle_time, 0)
+
+    def test_auto_run_expiration_does_not_depend_on_frame_count(self):
+        for intervals in ((5,), (1, 1, 1, 1, 1), (0.25,) * 20):
+            with self.subTest(intervals=intervals):
+                self.boy = Boy()
+                self.boy.activate_auto_run()
+                for seconds in intervals:
+                    self.advance(seconds)
+                self.assertEqual(self.boy.state, 'IDLE')
+
 
 if __name__ == '__main__':
     unittest.main()

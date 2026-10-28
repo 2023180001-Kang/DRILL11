@@ -5,6 +5,7 @@ from transitions import Machine
 
 
 class AutoRun:
+    DURATION = 5.0
     SPEED_MULTIPLIER = 2.0
     SCALE_MULTIPLIER = 2.0
 
@@ -29,9 +30,14 @@ class AutoRun:
         self.boy.frame = 0
         self.boy.idle_time = 0
 
-    def update(self, delta_time):
-        self.boy.x += self.boy.direction * self.boy.speed * delta_time
+    def update(self, delta_time, current_time):
+        elapsed = current_time - self.started_at
+        # A delayed frame must not add movement beyond the five-second window.
+        active_time = max(0.0, min(delta_time, self.DURATION - elapsed + delta_time))
+        self.boy.x += self.boy.direction * self.boy.speed * active_time
         self.bounce_at_edges()
+        if elapsed >= self.DURATION:
+            self.boy.finish_auto_run()
 
     def bounce_at_edges(self):
         half_width = self.boy.SPRITE_SIZE * self.boy.scale / 2
@@ -99,7 +105,7 @@ class Boy:
             self.x = max(50, min(750, self.x + self.direction * self.speed * delta_time))
             self.frame = (self.frame + 1) % 8
         elif self.state == 'AutoRun':
-            self.auto_run.update(delta_time)
+            self.auto_run.update(delta_time, current_time)
 
     def draw(self):
         if self.state in ('RUN', 'AutoRun'):
