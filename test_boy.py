@@ -1,0 +1,69 @@
+import unittest
+from unittest.mock import Mock, patch
+
+from boy import Boy
+
+
+class BoyTests(unittest.TestCase):
+    def setUp(self):
+        clock = patch('boy.get_time', return_value=1000.0)
+        self.clock = clock.start()
+        self.addCleanup(clock.stop)
+        image = patch('boy.load_image', return_value=Mock())
+        self.image = image.start().return_value
+        self.addCleanup(image.stop)
+        self.boy = Boy()
+
+    def advance(self, seconds):
+        self.clock.return_value += seconds
+        self.boy.update()
+
+    def test_initial_state_is_idle(self):
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.direction, 0)
+
+    def test_running_uses_elapsed_time(self):
+        self.boy.set_direction(1)
+        self.advance(0.25)
+        self.assertEqual(self.boy.state, 'RUN')
+        self.assertEqual(self.boy.x, 450)
+
+    def test_running_stays_inside_normal_bounds(self):
+        for direction, expected in ((1, 750), (-1, 50)):
+            with self.subTest(direction=direction):
+                self.boy.set_direction(direction)
+                self.advance(10)
+                self.assertEqual(self.boy.x, expected)
+
+    def test_releasing_direction_stops_running(self):
+        self.boy.set_direction(-1)
+        self.boy.set_direction(0)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.idle_time, 0)
+
+    def test_idle_sleeps_after_five_seconds(self):
+        self.advance(4.9)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.advance(0.1)
+        self.assertEqual(self.boy.state, 'SLEEP')
+
+    def test_wake_resets_idle_timer(self):
+        self.advance(5)
+        self.boy.wake()
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.idle_time, 0)
+
+    def test_direction_wakes_into_running(self):
+        self.advance(5)
+        self.boy.set_direction(-1)
+        self.assertEqual(self.boy.state, 'RUN')
+        self.assertEqual(self.boy.face_dir, -1)
+
+    def test_running_draws_directional_animation(self):
+        self.boy.set_direction(-1)
+        self.boy.draw()
+        self.image.clip_draw.assert_called_once_with(0, 0, 100, 100, 400, 90)
+
+
+if __name__ == '__main__':
+    unittest.main()
