@@ -192,6 +192,34 @@ class BoyTests(unittest.TestCase):
                     self.advance(seconds)
                 self.assertEqual(self.boy.state, 'IDLE')
 
+    def test_direction_cancels_auto_run_and_restores_normal_movement(self):
+        for direction in (-1, 1):
+            with self.subTest(direction=direction):
+                self.boy = Boy()
+                self.boy.activate_auto_run()
+                self.boy.set_direction(direction)
+                self.assertEqual(self.boy.state, 'RUN')
+                self.assertEqual(self.boy.direction, direction)
+                self.assertEqual(self.boy.face_dir, direction)
+                self.assertEqual(self.boy.speed, 200)
+                self.assertEqual(self.boy.scale, 1)
+                self.advance(0.25)
+                self.assertEqual(self.boy.x, 400 + direction * 50)
+
+    def test_zero_direction_does_not_cancel_auto_run(self):
+        self.boy.activate_auto_run()
+        self.boy.set_direction(0)
+        self.advance(0.25)
+        self.assertEqual(self.boy.state, 'AutoRun')
+        self.assertEqual(self.boy.x, 500)
+
+    def test_cancel_does_not_reuse_time_spent_in_auto_run(self):
+        self.boy.activate_auto_run()
+        self.clock.return_value += 2
+        self.boy.set_direction(-1)
+        self.boy.update()
+        self.assertEqual(self.boy.x, 400)
+
 
 if __name__ == '__main__':
     unittest.main()

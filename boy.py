@@ -24,11 +24,17 @@ class AutoRun:
         self.bounce_at_edges()
 
     def exit(self):
+        self.boy.last_update_time = get_time()
         self.boy.direction = 0
         self.boy.speed = self.boy.RUN_SPEED
         self.boy.scale = 1.0
         self.boy.frame = 0
         self.boy.idle_time = 0
+
+    def handle_direction(self, direction):
+        if direction:
+            self.boy.cancel_auto_run()
+            self.boy.direction = self.boy.face_dir = direction
 
     def update(self, delta_time, current_time):
         elapsed = current_time - self.started_at
@@ -81,6 +87,7 @@ class Boy:
                 {'trigger': 'stop_running', 'source': 'RUN', 'dest': 'IDLE'},
                 {'trigger': 'begin_auto_run', 'source': 'IDLE', 'dest': 'AutoRun'},
                 {'trigger': 'finish_auto_run', 'source': 'AutoRun', 'dest': 'IDLE'},
+                {'trigger': 'cancel_auto_run', 'source': 'AutoRun', 'dest': 'RUN'},
             ],
         )
 
@@ -125,6 +132,9 @@ class Boy:
             self.image.clip_draw(source_x, source_y, 100, 100, self.x, draw_y, size, size)
 
     def set_direction(self, direction):
+        if self.state == 'AutoRun':
+            self.auto_run.handle_direction(direction)
+            return
         self.direction = direction
         if direction == 0:
             if self.state == 'RUN':
