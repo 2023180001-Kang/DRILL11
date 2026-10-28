@@ -62,7 +62,7 @@ class BoyTests(unittest.TestCase):
     def test_running_draws_directional_animation(self):
         self.boy.set_direction(-1)
         self.boy.draw()
-        self.image.clip_draw.assert_called_once_with(0, 0, 100, 100, 400, 90)
+        self.image.clip_draw.assert_called_once_with(0, 0, 100, 100, 400, 90, 100, 100)
 
     def test_auto_run_uses_its_own_state_class(self):
         self.assertIsInstance(self.boy.auto_run, AutoRun)
@@ -117,6 +117,18 @@ class BoyTests(unittest.TestCase):
         self.assertEqual(self.boy.speed, 400)
         self.boy.finish_auto_run()
         self.assertEqual(self.boy.speed, 200)
+
+    def test_auto_run_draws_enlarged_running_sprite_with_feet_grounded(self):
+        self.boy.activate_auto_run()
+        self.boy.draw()
+        self.image.clip_draw.assert_called_once_with(0, 100, 100, 100, 400, 140, 200, 200)
+
+    def test_auto_run_restores_normal_size_on_exit(self):
+        self.boy.activate_auto_run()
+        self.boy.finish_auto_run()
+        self.boy.draw()
+        self.assertEqual(self.boy.scale, 1)
+        self.image.clip_draw.assert_called_once_with(0, 300, 100, 100, 400, 90, 100, 100)
 
 
 if __name__ == '__main__':

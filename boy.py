@@ -6,6 +6,7 @@ from transitions import Machine
 
 class AutoRun:
     SPEED_MULTIPLIER = 2.0
+    SCALE_MULTIPLIER = 2.0
 
     def __init__(self, boy):
         self.boy = boy
@@ -16,12 +17,14 @@ class AutoRun:
         self.boy.last_update_time = self.started_at
         self.boy.direction = self.boy.face_dir
         self.boy.speed = self.boy.RUN_SPEED * self.SPEED_MULTIPLIER
+        self.boy.scale = self.SCALE_MULTIPLIER
         self.boy.frame = 0
         self.boy.idle_time = 0
 
     def exit(self):
         self.boy.direction = 0
         self.boy.speed = self.boy.RUN_SPEED
+        self.boy.scale = 1.0
         self.boy.frame = 0
         self.boy.idle_time = 0
 
@@ -31,6 +34,7 @@ class AutoRun:
 
 class Boy:
     RUN_SPEED = 200
+    SPRITE_SIZE = 100
 
     def __init__(self):
         self.x, self.y = 400, 90
@@ -38,6 +42,7 @@ class Boy:
         self.face_dir = 1
         self.direction = 0
         self.speed = self.RUN_SPEED
+        self.scale = 1.0
         self.idle_time = 0
         self.last_update_time = get_time()
         self.image = load_image('animation_sheet.png')
@@ -85,7 +90,7 @@ class Boy:
             self.auto_run.update(delta_time)
 
     def draw(self):
-        if self.state == 'RUN':
+        if self.state in ('RUN', 'AutoRun'):
             source_y = 100 if self.face_dir == 1 else 0
         else:
             source_y = 300 if self.face_dir == 1 else 200
@@ -97,7 +102,9 @@ class Boy:
                 source_x, source_y, 100, 100, radians(90 * self.face_dir), '', self.x, sleep_y, 100, 100
             )
         else:
-            self.image.clip_draw(source_x, source_y, 100, 100, self.x, self.y)
+            size = self.SPRITE_SIZE * self.scale
+            draw_y = self.y + (size - self.SPRITE_SIZE) / 2
+            self.image.clip_draw(source_x, source_y, 100, 100, self.x, draw_y, size, size)
 
     def set_direction(self, direction):
         self.direction = direction
