@@ -278,6 +278,55 @@ class BoyTests(unittest.TestCase):
         self.boy.draw()
         self.image.clip_draw.assert_called_once_with(100, 100, 100, 100, 425, 140, 200, 200)
 
+    def test_repeated_auto_run_entries_reset_timer_without_stacking_effects(self):
+        for cycle in range(6):
+            with self.subTest(cycle=cycle):
+                self.boy.activate_auto_run()
+                self.assertEqual(self.boy.auto_run.started_at, self.clock.return_value)
+                self.assertEqual(self.boy.speed, 400)
+                self.assertEqual(self.boy.scale, 2)
+                self.assertTrue(self.boy.invincible)
+                if cycle % 2:
+                    self.boy.set_direction(-1)
+                    self.boy.set_direction(0)
+                else:
+                    self.advance(5)
+                self.assertEqual(self.boy.state, 'IDLE')
+                self.assertEqual(self.boy.speed, 200)
+                self.assertEqual(self.boy.scale, 1)
+                self.assertFalse(self.boy.invincible)
+                self.advance(0.25)
+
+    def test_timeout_starts_a_fresh_idle_sleep_countdown(self):
+        self.advance(4)
+        self.boy.activate_auto_run()
+        self.advance(5)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.advance(4)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.advance(1)
+        self.assertEqual(self.boy.state, 'SLEEP')
+
+    def test_wake_does_not_interrupt_auto_run(self):
+        self.boy.activate_auto_run()
+        self.boy.wake()
+        self.assertEqual(self.boy.state, 'AutoRun')
+
+    def test_sleeping_draw_retains_existing_rotation_and_size(self):
+        self.advance(5)
+        self.boy.draw()
+        args = self.image.clip_composite_draw.call_args.args
+        self.assertEqual(args[:4], (0, 300, 100, 100))
+        self.assertAlmostEqual(args[4], 1.5707963267948966)
+        self.assertEqual(args[5:], ('', 400, 70, 100, 100))
+
+    def test_auto_run_bounce_draws_opposite_facing_row(self):
+        self.boy.x = 690
+        self.boy.activate_auto_run()
+        self.advance(0.125)
+        self.boy.draw()
+        self.assertEqual(self.image.clip_draw.call_args.args[1], 0)
+
 
 if __name__ == '__main__':
     unittest.main()
