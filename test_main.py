@@ -49,6 +49,50 @@ class InputTests(unittest.TestCase):
         self.send(main.SDL_KEYDOWN, main.SDLK_a)
         self.assertEqual(self.boy.state, 'SLEEP')
 
+    def test_arrow_press_cancels_in_pressed_direction(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.assertEqual(self.boy.state, 'RUN')
+        self.assertEqual(self.boy.direction, -1)
+
+    def test_arrow_release_does_not_cancel_auto_run(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_RIGHT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.send(main.SDL_KEYUP, main.SDLK_LEFT)
+        self.assertEqual(self.boy.state, 'AutoRun')
+
+    def test_new_arrow_wins_when_cancelling_with_other_arrow_held(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_RIGHT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.send(main.SDL_KEYUP, main.SDLK_LEFT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.assertEqual(self.boy.state, 'RUN')
+        self.assertEqual(self.boy.direction, -1)
+
+    def test_general_run_keeps_existing_opposite_key_rule(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.send(main.SDL_KEYDOWN, main.SDLK_RIGHT)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.send(main.SDL_KEYUP, main.SDLK_LEFT)
+        self.assertEqual(self.boy.state, 'RUN')
+        self.assertEqual(self.boy.direction, 1)
+
+    def test_direction_input_wins_over_same_frame_timeout(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.clock.return_value += 5
+        self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        self.boy.update()
+        self.assertEqual(self.boy.state, 'RUN')
+        self.assertEqual(self.boy.direction, -1)
+
+    def test_vertical_arrows_keep_auto_run_active(self):
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        for key in (main.SDLK_UP, main.SDLK_DOWN):
+            self.send(main.SDL_KEYDOWN, key)
+            self.assertEqual(self.boy.state, 'AutoRun')
+
 
 if __name__ == '__main__':
     unittest.main()

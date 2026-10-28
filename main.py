@@ -23,17 +23,21 @@ def handle_events():
                     o.activate_auto_run()
         elif event.type == SDL_KEYDOWN and event.key in (SDLK_LEFT, SDLK_RIGHT):
             pressed_keys.add(event.key)
-            update_boy_directions()
+            update_boy_directions(1 if event.key == SDLK_RIGHT else -1)
         elif event.type == SDL_KEYUP and event.key in (SDLK_LEFT, SDLK_RIGHT):
             pressed_keys.discard(event.key)
             update_boy_directions()
 
 
-def update_boy_directions():
+def update_boy_directions(pressed_direction=None):
     direction = int(SDLK_RIGHT in pressed_keys) - int(SDLK_LEFT in pressed_keys)
     for o in world:
         if isinstance(o, Boy):
-            o.set_direction(direction)
+            if o.state == 'AutoRun':
+                if pressed_direction is not None:
+                    o.set_direction(pressed_direction)
+            else:
+                o.set_direction(direction)
 
 def reset_world():
     global world
