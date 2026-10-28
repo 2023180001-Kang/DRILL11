@@ -91,6 +91,27 @@ class BoyTests(unittest.TestCase):
         self.assertEqual(self.boy.direction, 0)
         self.assertEqual(self.boy.idle_time, 0)
 
+    def test_auto_run_moves_without_input(self):
+        self.boy.activate_auto_run()
+        self.advance(0.25)
+        self.assertEqual(self.boy.x, 450)
+        self.assertEqual(self.boy.state, 'AutoRun')
+
+    def test_auto_run_movement_does_not_depend_on_frame_count(self):
+        for intervals in ((0.25,), (0.125, 0.125)):
+            with self.subTest(intervals=intervals):
+                self.boy = Boy()
+                self.boy.activate_auto_run()
+                for seconds in intervals:
+                    self.advance(seconds)
+                self.assertEqual(self.boy.x, 450)
+
+    def test_auto_run_does_not_include_time_before_entry(self):
+        self.clock.return_value += 3
+        self.boy.activate_auto_run()
+        self.advance(0.125)
+        self.assertEqual(self.boy.x, 425)
+
 
 if __name__ == '__main__':
     unittest.main()

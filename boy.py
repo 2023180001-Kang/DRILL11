@@ -21,6 +21,9 @@ class AutoRun:
         self.boy.frame = 0
         self.boy.idle_time = 0
 
+    def update(self, delta_time):
+        self.boy.x += self.boy.direction * self.boy.RUN_SPEED * delta_time
+
 
 class Boy:
     RUN_SPEED = 200
@@ -73,6 +76,8 @@ class Boy:
         elif self.state == 'RUN':
             self.x = max(50, min(750, self.x + self.direction * self.RUN_SPEED * delta_time))
             self.frame = (self.frame + 1) % 8
+        elif self.state == 'AutoRun':
+            self.auto_run.update(delta_time)
 
     def draw(self):
         if self.state == 'RUN':
