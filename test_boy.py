@@ -12,6 +12,9 @@ class BoyTests(unittest.TestCase):
         image = patch('boy.load_image', return_value=Mock())
         self.image = image.start().return_value
         self.addCleanup(image.stop)
+        canvas = patch('boy.get_canvas_width', return_value=800)
+        canvas.start()
+        self.addCleanup(canvas.stop)
         self.boy = Boy()
 
     def advance(self, seconds):
@@ -129,6 +132,36 @@ class BoyTests(unittest.TestCase):
         self.boy.draw()
         self.assertEqual(self.boy.scale, 1)
         self.image.clip_draw.assert_called_once_with(0, 300, 100, 100, 400, 90, 100, 100)
+
+    def test_auto_run_bounces_at_both_enlarged_boundaries(self):
+        for start, direction, edge in ((690, 1, 700), (110, -1, 100)):
+            with self.subTest(direction=direction):
+                self.boy = Boy()
+                self.boy.x = start
+                self.boy.face_dir = direction
+                self.boy.activate_auto_run()
+                started_at = self.boy.auto_run.started_at
+                self.advance(0.1)
+                self.assertEqual(self.boy.x, edge)
+                self.assertEqual(self.boy.direction, -direction)
+                self.assertEqual(self.boy.face_dir, -direction)
+                self.assertEqual(self.boy.auto_run.started_at, started_at)
+                self.advance(0.1)
+                self.assertAlmostEqual(self.boy.x, edge - direction * 40)
+
+    def test_auto_run_entry_corrects_position_for_enlargement(self):
+        for start, expected in ((50, 100), (750, 700)):
+            with self.subTest(start=start):
+                self.boy = Boy()
+                self.boy.x = start
+                self.boy.activate_auto_run()
+                self.assertEqual(self.boy.x, expected)
+
+    def test_auto_run_clamps_large_frame_overshoot(self):
+        self.boy.activate_auto_run()
+        self.advance(2)
+        self.assertEqual(self.boy.x, 700)
+        self.assertEqual(self.boy.direction, -1)
 
 
 if __name__ == '__main__':

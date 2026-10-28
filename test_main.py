@@ -14,6 +14,9 @@ class InputTests(unittest.TestCase):
         image = patch('boy.load_image', return_value=Mock())
         image.start()
         self.addCleanup(image.stop)
+        canvas = patch('boy.get_canvas_width', return_value=800)
+        canvas.start()
+        self.addCleanup(canvas.stop)
         self.boy = Boy()
         main.world = [self.boy]
         main.pressed_keys.clear()

@@ -1,6 +1,6 @@
 from math import radians
 
-from pico2d import get_time, load_image
+from pico2d import get_canvas_width, get_time, load_image
 from transitions import Machine
 
 
@@ -20,6 +20,7 @@ class AutoRun:
         self.boy.scale = self.SCALE_MULTIPLIER
         self.boy.frame = 0
         self.boy.idle_time = 0
+        self.bounce_at_edges()
 
     def exit(self):
         self.boy.direction = 0
@@ -30,6 +31,17 @@ class AutoRun:
 
     def update(self, delta_time):
         self.boy.x += self.boy.direction * self.boy.speed * delta_time
+        self.bounce_at_edges()
+
+    def bounce_at_edges(self):
+        half_width = self.boy.SPRITE_SIZE * self.boy.scale / 2
+        right_edge = get_canvas_width() - half_width
+        if self.boy.x <= half_width:
+            self.boy.x = half_width
+            self.boy.direction = self.boy.face_dir = 1
+        elif self.boy.x >= right_edge:
+            self.boy.x = right_edge
+            self.boy.direction = self.boy.face_dir = -1
 
 
 class Boy:
