@@ -17,6 +17,10 @@ def handle_events():
             for o in world:
                 if isinstance(o, Boy):
                     o.wake()
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_a:
+            for o in world:
+                if isinstance(o, Boy):
+                    o.activate_auto_run()
         elif event.type == SDL_KEYDOWN and event.key in (SDLK_LEFT, SDLK_RIGHT):
             pressed_keys.add(event.key)
             update_boy_directions()
