@@ -96,6 +96,13 @@ class Boy:
             return self.begin_auto_run()
         return False
 
+    @property
+    def invincible(self):
+        return self.state == 'AutoRun'
+
+    def can_take_damage(self):
+        return not self.invincible
+
     def update(self):
         current_time = get_time()
         delta_time = current_time - self.last_update_time

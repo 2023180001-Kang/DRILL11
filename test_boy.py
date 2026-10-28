@@ -220,6 +220,42 @@ class BoyTests(unittest.TestCase):
         self.boy.update()
         self.assertEqual(self.boy.x, 400)
 
+    def test_auto_run_blocks_test_damage(self):
+        received_damage = []
+
+        def apply_test_damage():
+            if self.boy.can_take_damage():
+                received_damage.append(1)
+
+        apply_test_damage()
+        self.boy.activate_auto_run()
+        self.assertTrue(self.boy.invincible)
+        apply_test_damage()
+        self.assertEqual(received_damage, [1])
+        self.boy.set_direction(-1)
+        apply_test_damage()
+        self.assertEqual(received_damage, [1, 1])
+
+    def test_both_exit_paths_remove_invincibility(self):
+        for cancel in (True, False):
+            with self.subTest(cancel=cancel):
+                self.boy = Boy()
+                self.boy.activate_auto_run()
+                if cancel:
+                    self.boy.set_direction(1)
+                else:
+                    self.advance(5)
+                self.assertFalse(self.boy.invincible)
+                self.assertTrue(self.boy.can_take_damage())
+
+    def test_normal_states_do_not_gain_invincibility(self):
+        self.assertTrue(self.boy.can_take_damage())
+        self.boy.set_direction(-1)
+        self.assertTrue(self.boy.can_take_damage())
+        self.boy.set_direction(0)
+        self.advance(5)
+        self.assertTrue(self.boy.can_take_damage())
+
 
 if __name__ == '__main__':
     unittest.main()
