@@ -54,6 +54,37 @@ class InputTests(unittest.TestCase):
         self.assertEqual(self.boy.state, 'RUN')
         self.assertEqual(self.boy.direction, -1)
 
+    def test_arrow_cancellation_moves_immediately_and_continues_while_held(self):
+        for key, direction in ((main.SDLK_LEFT, -1), (main.SDLK_RIGHT, 1)):
+            with self.subTest(direction=direction):
+                self.boy = Boy()
+                main.world = [self.boy]
+                main.pressed_keys.clear()
+                self.send(main.SDL_KEYDOWN, main.SDLK_a)
+                self.clock.return_value += 0.125
+                main.update_world()
+                start_x = self.boy.x
+                self.clock.return_value += 0.125
+                self.send(main.SDL_KEYDOWN, key)
+                main.update_world()
+                self.assertEqual(self.boy.state, 'RUN')
+                self.assertEqual(self.boy.x, start_x + direction * 25)
+                self.assertEqual(self.boy.speed, 200)
+                self.assertEqual(self.boy.scale, 1)
+                self.assertFalse(self.boy.invincible)
+                self.send(main.SDL_KEYUP, main.SDLK_a)
+                for frame in range(1, 4):
+                    self.clock.return_value += 0.125
+                    main.update_world()
+                    self.assertEqual(self.boy.state, 'RUN')
+                    self.assertEqual(self.boy.x, start_x + direction * 25 * (frame + 1))
+                self.send(main.SDL_KEYUP, key)
+                stopped_x = self.boy.x
+                self.clock.return_value += 0.125
+                main.update_world()
+                self.assertEqual(self.boy.state, 'IDLE')
+                self.assertEqual(self.boy.x, stopped_x)
+
     def test_arrow_release_does_not_cancel_auto_run(self):
         self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
         self.send(main.SDL_KEYDOWN, main.SDLK_RIGHT)
@@ -140,8 +171,13 @@ class InputTests(unittest.TestCase):
         with patch('main.Grass'):
             main.reset_world()
         self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.clock.return_value += 0.125
+        main.update_world()
+        self.clock.return_value += 0.125
         self.send(main.SDL_KEYDOWN, main.SDLK_LEFT)
+        main.update_world()
         self.assertTrue(all(boy.state == 'RUN' and boy.direction == -1 for boy in main.world[1:]))
+        self.assertTrue(all(boy.x == 425 for boy in main.world[1:]))
 
     def test_space_still_wakes_sleeping_boys(self):
         self.boy.sleep()

@@ -218,12 +218,13 @@ class BoyTests(unittest.TestCase):
         self.assertEqual(self.boy.state, 'AutoRun')
         self.assertEqual(self.boy.x, 500)
 
-    def test_cancel_does_not_reuse_time_spent_in_auto_run(self):
+    def test_cancel_preserves_pending_frame_time_for_normal_run(self):
         self.boy.activate_auto_run()
-        self.clock.return_value += 2
+        self.advance(0.125)
+        self.clock.return_value += 0.125
         self.boy.set_direction(-1)
         self.boy.update()
-        self.assertEqual(self.boy.x, 400)
+        self.assertEqual(self.boy.x, 425)
 
     def test_auto_run_blocks_test_damage(self):
         received_damage = []

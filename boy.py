@@ -25,7 +25,6 @@ class AutoRun:
         self.bounce_at_edges()
 
     def exit(self):
-        self.boy.last_update_time = get_time()
         self.boy.direction = 0
         self.boy.speed = self.boy.RUN_SPEED
         self.boy.scale = 1.0
