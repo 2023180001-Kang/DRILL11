@@ -47,22 +47,22 @@ class BoyTests(unittest.TestCase):
         self.boy.set_direction(-1)
         self.boy.set_direction(0)
         self.assertEqual(self.boy.state, 'IDLE')
-        self.assertEqual(self.boy.idle_time, 0)
+        self.assertEqual(self.boy.frame, 0)
 
-    def test_idle_sleeps_after_five_seconds(self):
-        self.advance(4.9)
-        self.assertEqual(self.boy.state, 'IDLE')
-        self.advance(0.1)
-        self.assertEqual(self.boy.state, 'SLEEP')
-
-    def test_wake_resets_idle_timer(self):
+    def test_idle_does_not_automatically_sleep(self):
         self.advance(5)
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.advance(60)
+        self.assertEqual(self.boy.state, 'IDLE')
+
+    def test_wake_returns_to_idle(self):
+        self.boy.sleep()
         self.boy.wake()
         self.assertEqual(self.boy.state, 'IDLE')
-        self.assertEqual(self.boy.idle_time, 0)
+        self.assertEqual(self.boy.frame, 0)
 
     def test_direction_wakes_into_running(self):
-        self.advance(5)
+        self.boy.sleep()
         self.boy.set_direction(-1)
         self.assertEqual(self.boy.state, 'RUN')
         self.assertEqual(self.boy.face_dir, -1)
@@ -88,7 +88,7 @@ class BoyTests(unittest.TestCase):
         self.assertFalse(self.boy.activate_auto_run())
         self.assertEqual(self.boy.state, 'RUN')
         self.boy.set_direction(0)
-        self.advance(5)
+        self.boy.sleep()
         self.assertFalse(self.boy.activate_auto_run())
         self.assertEqual(self.boy.state, 'SLEEP')
 
@@ -97,7 +97,7 @@ class BoyTests(unittest.TestCase):
         self.boy.finish_auto_run()
         self.assertEqual(self.boy.state, 'IDLE')
         self.assertEqual(self.boy.direction, 0)
-        self.assertEqual(self.boy.idle_time, 0)
+        self.assertEqual(self.boy.frame, 0)
 
     def test_auto_run_moves_without_input(self):
         self.boy.activate_auto_run()
@@ -186,7 +186,7 @@ class BoyTests(unittest.TestCase):
         self.boy.activate_auto_run()
         self.advance(6)
         self.assertEqual(self.boy.state, 'IDLE')
-        self.assertEqual(self.boy.idle_time, 0)
+        self.assertEqual(self.boy.direction, 0)
 
     def test_auto_run_expiration_does_not_depend_on_frame_count(self):
         for intervals in ((5,), (1, 1, 1, 1, 1), (0.25,) * 20):
@@ -302,15 +302,15 @@ class BoyTests(unittest.TestCase):
                 self.assertFalse(self.boy.invincible)
                 self.advance(0.25)
 
-    def test_timeout_starts_a_fresh_idle_sleep_countdown(self):
+    def test_timeout_keeps_idle_without_automatic_sleep(self):
         self.advance(4)
         self.boy.activate_auto_run()
         self.advance(5)
         self.assertEqual(self.boy.state, 'IDLE')
-        self.advance(4)
+        self.advance(5)
         self.assertEqual(self.boy.state, 'IDLE')
-        self.advance(1)
-        self.assertEqual(self.boy.state, 'SLEEP')
+        self.advance(60)
+        self.assertEqual(self.boy.state, 'IDLE')
 
     def test_wake_does_not_interrupt_auto_run(self):
         self.boy.activate_auto_run()
@@ -318,7 +318,7 @@ class BoyTests(unittest.TestCase):
         self.assertEqual(self.boy.state, 'AutoRun')
 
     def test_sleeping_draw_retains_existing_rotation_and_size(self):
-        self.advance(5)
+        self.boy.sleep()
         self.boy.draw()
         args = self.image.clip_composite_draw.call_args.args
         self.assertEqual(args[:4], (0, 300, 100, 100))

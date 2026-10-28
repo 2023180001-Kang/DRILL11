@@ -44,8 +44,7 @@ class InputTests(unittest.TestCase):
         self.assertEqual(self.boy.state, 'RUN')
 
     def test_a_does_not_wake_sleeping_boys(self):
-        self.clock.return_value += 5
-        self.boy.update()
+        self.boy.sleep()
         self.send(main.SDL_KEYDOWN, main.SDLK_a)
         self.assertEqual(self.boy.state, 'SLEEP')
 
@@ -145,10 +144,15 @@ class InputTests(unittest.TestCase):
         self.assertTrue(all(boy.state == 'RUN' and boy.direction == -1 for boy in main.world[1:]))
 
     def test_space_still_wakes_sleeping_boys(self):
-        self.clock.return_value += 5
-        main.update_world()
+        self.boy.sleep()
         self.send(main.SDL_KEYDOWN, main.SDLK_SPACE)
         self.assertEqual(self.boy.state, 'IDLE')
+
+    def test_a_can_start_after_a_long_idle_wait(self):
+        self.clock.return_value += 60
+        main.update_world()
+        self.send(main.SDL_KEYDOWN, main.SDLK_a)
+        self.assertEqual(self.boy.state, 'AutoRun')
 
     def test_escape_and_window_close_stop_running(self):
         for event_type, key in ((main.SDL_KEYDOWN, main.SDLK_ESCAPE), (main.SDL_QUIT, None)):

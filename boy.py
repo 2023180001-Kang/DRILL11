@@ -22,7 +22,6 @@ class AutoRun:
         self.boy.speed = self.boy.RUN_SPEED * self.SPEED_MULTIPLIER
         self.boy.scale = self.SCALE_MULTIPLIER
         self.boy.frame = 0
-        self.boy.idle_time = 0
         self.bounce_at_edges()
 
     def exit(self):
@@ -31,7 +30,6 @@ class AutoRun:
         self.boy.speed = self.boy.RUN_SPEED
         self.boy.scale = 1.0
         self.boy.frame = 0
-        self.boy.idle_time = 0
 
     def handle_direction(self, direction):
         if direction:
@@ -70,7 +68,6 @@ class Boy:
         self.direction = 0
         self.speed = self.RUN_SPEED
         self.scale = 1.0
-        self.idle_time = 0
         self.last_update_time = get_time()
         self.image = load_image(str(Path(__file__).resolve().with_name('animation_sheet.png')))
         self.auto_run = AutoRun(self)
@@ -112,12 +109,7 @@ class Boy:
         self.last_update_time = current_time
 
         if self.state == 'IDLE':
-            self.idle_time += delta_time
-            if self.idle_time >= 5:
-                self.sleep()
-                self.idle_time = 0
-            else:
-                self.frame = (self.frame + 1) % 8
+            self.frame = (self.frame + 1) % 8
         elif self.state == 'RUN':
             self.x = max(50, min(750, self.x + self.direction * self.speed * delta_time))
             self.frame = (self.frame + 1) % 8
@@ -149,18 +141,15 @@ class Boy:
         if direction == 0:
             if self.state == 'RUN':
                 self.stop_running()
-                self.idle_time = 0
                 self.frame = 0
             return
 
         self.face_dir = direction
         if self.state != 'RUN':
             self.start_running()
-            self.idle_time = 0
             self.frame = 0
 
     def wake(self):
         if self.state == 'SLEEP':
             self.wake_up()
-            self.idle_time = 0
             self.frame = 0
