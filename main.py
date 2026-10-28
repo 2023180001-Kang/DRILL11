@@ -58,14 +58,24 @@ def render_world():
 
 running = True
 pressed_keys = set()
+world = []
 
-open_canvas()
-reset_world()
-# game loop
-while running:
-    handle_events()
-    update_world()
-    render_world()
-    delay(0.05)
-# finalization code
-close_canvas()
+
+def main():
+    global running
+    running = True
+    pressed_keys.clear()
+    open_canvas(800, 600)
+    try:
+        reset_world()
+        while running:
+            handle_events()
+            update_world()
+            render_world()
+            delay(0.05)
+    finally:
+        close_canvas()
+
+
+if __name__ == '__main__':
+    main()
