@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from boy import Boy
+from boy import AutoRun, Boy
 
 
 class BoyTests(unittest.TestCase):
@@ -63,6 +63,33 @@ class BoyTests(unittest.TestCase):
         self.boy.set_direction(-1)
         self.boy.draw()
         self.image.clip_draw.assert_called_once_with(0, 0, 100, 100, 400, 90)
+
+    def test_auto_run_uses_its_own_state_class(self):
+        self.assertIsInstance(self.boy.auto_run, AutoRun)
+        self.assertTrue(self.boy.activate_auto_run())
+        self.assertEqual(self.boy.state, 'AutoRun')
+        self.assertEqual(self.boy.auto_run.started_at, 1000)
+
+    def test_auto_run_starts_in_last_facing_direction(self):
+        self.boy.face_dir = -1
+        self.boy.activate_auto_run()
+        self.assertEqual(self.boy.direction, -1)
+
+    def test_auto_run_can_only_start_from_idle(self):
+        self.boy.set_direction(1)
+        self.assertFalse(self.boy.activate_auto_run())
+        self.assertEqual(self.boy.state, 'RUN')
+        self.boy.set_direction(0)
+        self.advance(5)
+        self.assertFalse(self.boy.activate_auto_run())
+        self.assertEqual(self.boy.state, 'SLEEP')
+
+    def test_auto_run_exit_resets_idle_state(self):
+        self.boy.activate_auto_run()
+        self.boy.finish_auto_run()
+        self.assertEqual(self.boy.state, 'IDLE')
+        self.assertEqual(self.boy.direction, 0)
+        self.assertEqual(self.boy.idle_time, 0)
 
 
 if __name__ == '__main__':
